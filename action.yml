@@ -34,6 +34,10 @@ runs:
       id: ip
       uses: haythem/public-ip@v1.3
 
+    - name: Set output for GitHub IP
+      shell: bash
+      run: echo "ipv4=${{ steps.ip.outputs.ipv4 }}" >> $GITHUB_OUTPUT
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -52,8 +56,3 @@ runs:
       shell: bash
       run: |
         aws ec2 revoke-security-group-ingress --group-id ${{ inputs.security-group-id }} --protocol tcp --port ${{ inputs.port }} --cidr ${{ steps.ip.outputs.ipv4 }}/32 || echo "IP might already be removed."
-
-  outputs:
-    ipv4:
-      description: "The GitHub Actions Public IPv4 address."
-      value: ${{ steps.ip.outputs.ipv4 }}
