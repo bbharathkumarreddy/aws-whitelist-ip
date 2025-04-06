@@ -1,0 +1,20 @@
+# Ignore AWS credentials or sensitive configuration files
+*.env
+*.key
+credentials
+aws_credentials
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore GitHub Actions workflow run artifacts
+artifacts/
+
+# Ignore any local test or debug files
+test/
+debug/

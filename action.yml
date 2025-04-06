@@ -1,0 +1,59 @@
+name: "AWS Whitelist IP"
+description: "Whitelist or revoke the GitHub Actions public IP in an AWS Security Group."
+author: "bbharathkumarreddy@96@gmail.com"
+branding:
+  icon: "package"
+  color: "blue"
+
+inputs:
+  security-group-id:
+    description: "AWS Security group id."
+    required: true
+  action:
+    description: "Choose 'whitelist' to add or 'remove' to revoke the IP."
+    default: "whitelist"
+    required: false
+  port:
+    description: "Port"
+    default: "22"
+    required: false
+  aws-access-key-id:
+    description: "AWS access key id."
+    required: true
+  aws-secret-access-key:
+    description: "AWS Secret access key."
+    required: true
+  aws-region:
+    description: "AWS region of the Security Group."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get Github action IP
+      id: ip
+      uses: haythem/public-ip@v1.3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Add Github Actions IP to Security group
+      if: ${{ inputs.action == 'whitelist' }}
+      shell: bash
+      run: |  
+        aws ec2 authorize-security-group-ingress --group-id ${{ inputs.security-group-id }} --protocol tcp --port ${{ inputs.port }} --cidr ${{ steps.ip.outputs.ipv4 }}/32 || echo "IP might already be whitelisted."
+
+    - name: Remove Github Actions IP from security group
+      if: ${{ inputs.action == 'remove' }}
+      shell: bash
+      run: |
+        aws ec2 revoke-security-group-ingress --group-id ${{ inputs.security-group-id }} --protocol tcp --port ${{ inputs.port }} --cidr ${{ steps.ip.outputs.ipv4 }}/32 || echo "IP might already be removed."
+
+  outputs:
+    ipv4:
+      description: "The GitHub Actions Public IPv4 address."
+      value: ${{ steps.ip.outputs.ipv4 }}
